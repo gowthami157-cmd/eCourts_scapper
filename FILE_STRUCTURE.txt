@@ -1,0 +1,246 @@
+================================================================================
+                    eCOURTS SCRAPER - FILE STRUCTURE
+================================================================================
+
+ecourts-scraper/
+│
+├── 📄 README.md                        Complete documentation (500+ lines)
+├── 📄 QUICKSTART.md                    5-minute quick start guide
+├── 📄 ARCHITECTURE.md                  Detailed system architecture
+├── 📄 SUBMISSION.md                    Submission documentation
+├── 📄 PROJECT_SUMMARY.txt              Project overview
+├── 📄 FILE_STRUCTURE.txt               This file
+│
+├── 📦 package.json                     Frontend dependencies
+├── 📦 package-lock.json                Dependency lock file
+├── ⚙️  vite.config.ts                  Vite configuration
+├── ⚙️  tsconfig.json                   TypeScript config
+├── ⚙️  tsconfig.app.json               App TypeScript config
+├── ⚙️  tsconfig.node.json              Node TypeScript config
+├── ⚙️  tailwind.config.js              Tailwind CSS config
+├── ⚙️  postcss.config.js               PostCSS config
+├── ⚙️  eslint.config.js                ESLint config
+├── 📄 .gitignore                       Git ignore rules
+│
+├── 🌐 frontend/
+│   ├── 📄 index.html                   HTML entry point
+│   │
+│   └── src/
+│       ├── 🎯 main.tsx                 React entry point
+│       ├── 🎨 App.tsx                  Main application (120 lines)
+│       ├── 🎨 index.css                Global styles
+│       ├── 📘 vite-env.d.ts            Vite types
+│       │
+│       ├── components/
+│       │   ├── 🧩 CourtSelector.tsx    Court hierarchy UI (200 lines)
+│       │   ├── 🔍 CaseSearch.tsx       Case search UI (250 lines)
+│       │   └── 📋 CauseList.tsx        Cause list display (200 lines)
+│       │
+│       └── services/
+│           └── 🔌 api.ts               API client (150 lines)
+│
+├── 🐍 backend/
+│   ├── 📄 README_BACKEND.md            Backend documentation
+│   ├── 📦 requirements.txt             Python dependencies
+│   ├── ⚙️  .env                        Environment variables
+│   ├── 📄 .gitignore                   Backend git ignore
+│   ├── 🚀 start.sh                     Backend start script
+│   │
+│   ├── 🎯 main.py                      FastAPI server (300 lines)
+│   │   ├── API Endpoints
+│   │   ├── CORS Configuration
+│   │   ├── Request/Response Models
+│   │   └── Error Handling
+│   │
+│   ├── 💻 cli.py                       CLI Interface (200 lines)
+│   │   ├── search-cnr command
+│   │   ├── search-case command
+│   │   ├── causelist command
+│   │   ├── states command
+│   │   └── districts command
+│   │
+│   ├── 🧪 test_api.py                  API test script
+│   │
+│   └── services/
+│       ├── 📄 __init__.py              Package init
+│       │
+│       ├── 🕷️  ecourts_scraper.py      Core scraping (500 lines)
+│       │   ├── fetch_states()
+│       │   ├── fetch_districts()
+│       │   ├── fetch_court_complexes()
+│       │   ├── fetch_courts()
+│       │   ├── search_case_by_cnr()
+│       │   ├── search_case_by_details()
+│       │   ├── fetch_cause_list()
+│       │   └── download_cause_list_pdf()
+│       │
+│       └── 💾 database.py              Supabase service (150 lines)
+│           ├── cache_states()
+│           ├── cache_districts()
+│           ├── cache_court_complexes()
+│           ├── cache_courts()
+│           ├── save_search_result()
+│           └── save_cause_list()
+│
+├── 🗄️  database/                       (Supabase - Cloud)
+│   ├── states                          State codes and names
+│   ├── districts                       Districts by state
+│   ├── court_complexes                 Court complexes
+│   ├── courts                          Individual courts
+│   ├── search_results                  Cached searches
+│   └── cause_lists                     Cached cause lists
+│
+└── 📦 Generated (not in repo)/
+    ├── node_modules/                   Node dependencies
+    ├── venv/                           Python virtual environment
+    ├── dist/                           Production build
+    └── downloads/                      Downloaded PDFs
+
+================================================================================
+                              CODE METRICS
+================================================================================
+
+Backend Python Files:
+├── main.py                             ~300 lines
+├── cli.py                              ~200 lines
+├── services/ecourts_scraper.py         ~500 lines
+├── services/database.py                ~150 lines
+└── test_api.py                         ~100 lines
+    TOTAL:                              ~1,250 lines
+
+Frontend TypeScript/React Files:
+├── App.tsx                             ~120 lines
+├── components/CourtSelector.tsx        ~200 lines
+├── components/CaseSearch.tsx           ~250 lines
+├── components/CauseList.tsx            ~200 lines
+├── services/api.ts                     ~150 lines
+└── main.tsx                            ~10 lines
+    TOTAL:                              ~930 lines
+
+Documentation Files:
+├── README.md                           ~500 lines
+├── QUICKSTART.md                       ~80 lines
+├── ARCHITECTURE.md                     ~400 lines
+├── SUBMISSION.md                       ~400 lines
+├── PROJECT_SUMMARY.txt                 ~500 lines
+└── backend/README_BACKEND.md           ~60 lines
+    TOTAL:                              ~1,940 lines
+
+GRAND TOTAL:                            ~4,120 lines
+
+================================================================================
+                            KEY FEATURES
+================================================================================
+
+✅ Web Interface (React)
+   - Court hierarchy selection
+   - Case search (CNR & details)
+   - Cause list viewer
+   - PDF & JSON downloads
+
+✅ REST API (FastAPI)
+   - 8+ endpoints
+   - Auto-generated docs (Swagger)
+   - Async operations
+   - Error handling
+
+✅ CLI Interface (Python)
+   - All features accessible
+   - File output support
+   - Automation ready
+   - Multiple commands
+
+✅ Database (Supabase)
+   - 6 normalized tables
+   - Row Level Security
+   - Caching layer
+   - Performance optimization
+
+✅ Web Scraping (BeautifulSoup)
+   - Real-time data fetching
+   - HTML parsing
+   - Error handling
+   - Retry logic
+
+================================================================================
+                          TECHNOLOGY STACK
+================================================================================
+
+Backend:
+- Python 3.9+
+- FastAPI (REST API)
+- BeautifulSoup4 (Scraping)
+- httpx (HTTP Client)
+- Supabase (Database)
+
+Frontend:
+- React 18
+- TypeScript
+- Vite (Build Tool)
+- TailwindCSS (Styling)
+- Lucide React (Icons)
+
+Database:
+- PostgreSQL (via Supabase)
+- Row Level Security
+- JSONB columns
+- Indexes for performance
+
+================================================================================
+                        RUNNING THE PROJECT
+================================================================================
+
+Terminal 1 (Backend):
+$ cd backend
+$ python -m venv venv
+$ source venv/bin/activate
+$ pip install -r requirements.txt
+$ python main.py
+
+Terminal 2 (Frontend):
+$ npm install
+$ npm run dev
+
+Access:
+- Web UI: http://localhost:5173
+- API Docs: http://localhost:8000/docs
+
+CLI Usage:
+$ python backend/cli.py states
+$ python backend/cli.py causelist --state 1 --district 1 --complex 01 --today
+
+================================================================================
+                          DOCUMENTATION
+================================================================================
+
+📖 Start Here:
+1. README.md              - Complete guide
+2. QUICKSTART.md          - Get running in 5 minutes
+
+📚 Deep Dive:
+3. ARCHITECTURE.md        - System design
+4. SUBMISSION.md          - Project details
+
+📋 Reference:
+5. PROJECT_SUMMARY.txt    - Overview
+6. FILE_STRUCTURE.txt     - This file
+7. backend/README_BACKEND.md - Backend guide
+
+================================================================================
+                            DELIVERABLES
+================================================================================
+
+✅ Complete source code
+✅ Backend API (FastAPI)
+✅ Frontend UI (React)
+✅ CLI interface
+✅ Database schema
+✅ Documentation (6 files)
+✅ Setup scripts
+✅ Test scripts
+✅ Error handling
+✅ Build verification
+
+All requirements met. Production ready.
+
+================================================================================
