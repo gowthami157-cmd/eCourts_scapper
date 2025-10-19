@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Download, FileText, Calendar as CalendarIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, FileText, Calendar as CalendarIcon, AlertCircle, RefreshCw, Volume2 } from 'lucide-react';
 import { apiService, CauseList as CauseListType, State, District, CourtComplex, Court } from '../services/api';
 
 interface CauseListProps {
@@ -14,19 +14,67 @@ export function CauseList({ selectedState, selectedDistrict, selectedComplex, se
   const [causeList, setCauseList] = useState<CauseListType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+  const [captchaAudio, setCaptchaAudio] = useState<string | null>(null);
+  const [captchaCode, setCaptchaCode] = useState('');
+  const [causeType, setCauseType] = useState<'civ' | 'cri'>('civ');
 
   const formatDateForApi = (dateStr: string) => {
     const [year, month, day] = dateStr.split('-');
     return `${day}-${month}-${year}`;
   };
 
+  const loadCaptcha = async (quiet = false) => {
+    if (!selectedState || !selectedDistrict || !selectedComplex) {
+      setCaptchaImage(null);
+      setCaptchaAudio(null);
+      setCaptchaCode('');
+      return;
+    }
+
+    try {
+      const payload = await apiService.getCauseListCaptcha();
+      setCaptchaImage(payload.image);
+      setCaptchaAudio(payload.audio ?? null);
+      setCaptchaCode('');
+      if (!quiet) {
+        setWarning(null);
+      }
+    } catch (err) {
+      console.error(err);
+      if (!quiet) {
+        setWarning('Unable to load captcha from eCourts. Please try again.');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (selectedState && selectedDistrict && selectedComplex) {
+      loadCaptcha();
+    } else {
+      setCaptchaImage(null);
+      setCaptchaAudio(null);
+      setCaptchaCode('');
+    }
+  }, [selectedState, selectedDistrict, selectedComplex]);
+
   const handleFetchCauseList = async () => {
     if (!selectedState || !selectedDistrict || !selectedComplex) {
       setError('Please select State, District, and Court Complex');
       return;
     }
+    if (!selectedCourt) {
+      setError('Please select a court before fetching the cause list');
+      return;
+    }
+    if (!captchaCode.trim()) {
+      setError('Please enter the captcha shown above');
+      return;
+    }
 
     setError(null);
+    setWarning(null);
     setCauseList(null);
     setLoading(true);
 
@@ -36,32 +84,53 @@ export function CauseList({ selectedState, selectedDistrict, selectedComplex, se
         selectedState.code,
         selectedDistrict.code,
         selectedComplex.code,
-        selectedCourt?.code || null,
-        formattedDate
+        selectedCourt.code,
+        formattedDate,
+        captchaCode.trim(),
+        causeType,
+        selectedCourt.name
       );
-      setCauseList(result);
+      const hasPortalError = Boolean(result.error || (result.errors && result.errors.length));
+      if (hasPortalError) {
+        const message = [result.error, ...(result.errors ?? [])].filter(Boolean).join(' ');
+        setWarning(message || 'The eCourts portal rejected the request. Please re-enter the captcha and try again.');
+        setCauseList(null);
+      } else {
+        setWarning(null);
+        setCauseList(result);
+      }
+      if (result.next_captcha) {
+        setCaptchaImage(result.next_captcha.image);
+        setCaptchaAudio(result.next_captcha.audio ?? null);
+        setCaptchaCode('');
+      } else {
+        await loadCaptcha(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch cause list');
+      await loadCaptcha(true);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDownloadPdf = () => {
-    if (!selectedState || !selectedDistrict || !selectedComplex) return;
+    if (!selectedState || !selectedDistrict || !selectedComplex || !selectedCourt) {
+      setError('Please select a court before downloading the PDF');
+      return;
+    }
 
     const formattedDate = formatDateForApi(date);
     const url = apiService.getDownloadPdfUrl(
       selectedState.code,
       selectedDistrict.code,
       selectedComplex.code,
-      selectedCourt?.code || null,
+      selectedCourt.code,
       formattedDate
     );
 
     window.open(url, '_blank');
   };
-
   const handleDownloadJson = () => {
     if (!causeList) return;
 
@@ -113,11 +182,101 @@ export function CauseList({ selectedState, selectedDistrict, selectedComplex, se
             Tomorrow
           </button>
         </div>
+
+        <div className="grid gap-3 lg:grid-cols-[auto,1fr] lg:items-end">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Captcha
+            </label>
+            {captchaImage ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={captchaImage}
+                  alt="eCourts Captcha"
+                  className="h-12 w-auto rounded border border-gray-300 bg-white p-1"
+                />
+                <button
+                  type="button"
+                  onClick={loadCaptcha}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </button>
+                {captchaAudio && (
+                  <a
+                    href={captchaAudio}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded transition-colors"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    Audio
+                  </a>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={loadCaptcha}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Load Captcha
+              </button>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Enter Captcha <span className="text-gray-500 text-xs">(match case exactly)</span>
+            </label>
+            <input
+              type="text"
+              value={captchaCode}
+              onChange={(e) => setCaptchaCode(e.target.value)}
+              maxLength={6}
+              placeholder="Enter captcha"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setCauseType('civ')}
+            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+              causeType === 'civ'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Civil
+          </button>
+          <button
+            type="button"
+            onClick={() => setCauseType('cri')}
+            className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+              causeType === 'cri'
+                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Criminal
+          </button>
+        </div>
       </div>
 
       <button
         onClick={handleFetchCauseList}
-        disabled={loading || !selectedState || !selectedDistrict || !selectedComplex}
+        disabled={
+          loading ||
+          !selectedState ||
+          !selectedDistrict ||
+          !selectedComplex ||
+          !selectedCourt ||
+          !captchaImage
+        }
         className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
       >
         <FileText className="w-5 h-5" />
@@ -127,6 +286,16 @@ export function CauseList({ selectedState, selectedDistrict, selectedComplex, se
       {error && (
         <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {warning && (
+        <div className="mt-4 flex items-start gap-3 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+          <AlertCircle className="w-5 h-5 mt-0.5 text-yellow-600 flex-shrink-0" />
+          <div>
+            <p className="font-medium">Portal response</p>
+            <p className="text-sm mt-1 whitespace-pre-wrap">{warning}</p>
+          </div>
         </div>
       )}
 

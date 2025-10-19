@@ -40,6 +40,9 @@ class CauseListRequest(BaseModel):
     district_code: str
     court_complex_code: str
     court_code: Optional[str] = None
+    court_name: Optional[str] = None
+    cause_type: str = "civ"
+    captcha_code: str
     date: str
 
 @app.get("/")
@@ -138,13 +141,28 @@ async def get_cause_list(request: CauseListRequest):
             request.district_code,
             request.court_complex_code,
             request.court_code,
-            request.date
+            request.date,
+            request.captcha_code,
+            request.cause_type,
+            request.court_name
         )
 
-        if cause_list:
+        if cause_list and cause_list.get("cases"):
             await db.save_cause_list(cause_list)
 
         return {"success": True, "data": cause_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/cause-list/captcha")
+async def get_cause_list_captcha():
+    try:
+        captcha = await scraper.fetch_cause_list_captcha()
+        if not captcha:
+            raise HTTPException(status_code=503, detail="Unable to retrieve captcha at this time.")
+        return {"success": True, "data": captcha}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

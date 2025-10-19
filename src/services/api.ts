@@ -49,9 +49,19 @@ export interface CauseList {
     district_code: string;
     court_complex_code: string;
     court_code?: string;
+    court_name?: string | null;
+    cause_type?: string;
     date: string;
     fetched_at: string;
   };
+  error?: string;
+  errors?: string[];
+  next_captcha?: Captcha;
+}
+
+export interface Captcha {
+  image: string;
+  audio?: string | null;
 }
 
 class ApiService {
@@ -122,7 +132,10 @@ class ApiService {
     districtCode: string,
     courtComplexCode: string,
     courtCode: string | null,
-    date: string
+    date: string,
+    captchaCode: string,
+    causeType: 'civ' | 'cri',
+    courtName?: string | null
   ): Promise<CauseList> {
     return this.fetchApi<CauseList>('/cause-list', {
       method: 'POST',
@@ -131,9 +144,16 @@ class ApiService {
         district_code: districtCode,
         court_complex_code: courtComplexCode,
         court_code: courtCode,
+        court_name: courtName,
+        cause_type: causeType,
+        captcha_code: captchaCode,
         date,
       }),
     });
+  }
+
+  async getCauseListCaptcha(): Promise<Captcha> {
+    return this.fetchApi<Captcha>('/cause-list/captcha');
   }
 
   getDownloadPdfUrl(

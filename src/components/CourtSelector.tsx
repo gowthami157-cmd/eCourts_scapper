@@ -113,6 +113,9 @@ export function CourtSelector({ onSelectionChange }: CourtSelectorProps) {
       setError(null);
       const data = await apiService.getCourts(selectedState.code, selectedDistrict.code, complexCode);
       setCourts(data);
+      if (data.length) {
+        setSelectedCourt(data[0]);
+      }
     } catch (err) {
       setError('Failed to load courts');
       console.error(err);
@@ -207,7 +210,7 @@ export function CourtSelector({ onSelectionChange }: CourtSelectorProps) {
       {selectedComplex && courts.length > 0 && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Court (Optional - Leave blank for all courts in complex)
+            Court (Required for cause list)
           </label>
           <div className="relative">
             <select
@@ -216,7 +219,7 @@ export function CourtSelector({ onSelectionChange }: CourtSelectorProps) {
               disabled={loading}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
             >
-              <option value="">All Courts in Complex</option>
+              <option value="">Select Court</option>
               {courts.map((court) => (
                 <option key={court.code} value={court.code}>
                   {court.name}
